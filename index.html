@@ -2,24 +2,79 @@
 <html>
 <head>
   <title>Design Approval Gallery</title>
+  <!-- Swiper CSS -->
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
   <style>
-    .swiper-container { width: 100%; height: 80vh; }
-    .swiper-slide { text-align: center; display: flex; flex-direction: column; }
-    img { max-width: 100%; max-height: 70vh; margin: 0 auto; }
-    .buttons { margin-top: 20px; }
-    .approve { background-color: red; color: white; padding: 10px; border: none; cursor: pointer; }
-    .revise { background-color: blue; color: white; padding: 10px; border: none; cursor: pointer; }
-    .revision-input { display: none; margin-top: 10px; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+
+    .swiper-container {
+      width: 100%;
+      height: 80vh;
+    }
+
+    .swiper-slide {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 65vh;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .buttons {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .approve,
+    .revise {
+      margin: 0 5px;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .approve {
+      background-color: #28a745; /* Green */
+    }
+
+    .revise {
+      background-color: #007bff; /* Blue */
+    }
+
+    .revision-input {
+      display: none;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .revision-input textarea {
+      width: 300px;
+      height: 80px;
+    }
   </style>
 </head>
 <body>
   <div class="swiper-container">
     <div class="swiper-wrapper"></div>
+    <!-- Swiper Controls -->
     <div class="swiper-pagination"></div>
     <div class="swiper-button-next"></div>
     <div class="swiper-button-prev"></div>
   </div>
+
   <div class="buttons">
     <button class="approve" onclick="handleApprove()">Approve</button>
     <button class="revise" onclick="showRevisionInput()">Revise</button>
@@ -29,44 +84,79 @@
     </div>
   </div>
 
-  <!-- Add Swiper JS -->
+  <!-- Swiper JS -->
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/1ZKODVwzrDEncatDAe3t3-EYhDO3zyMyvBAGGx5FddbQ/pub?output=csv";
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxogZzy6sTVBH40uA9EVbpJ6BqSc0TXrM5XPcaW_6iCTG9EBNNp2HeYwa8IIsSEGOxaPA/exec"; // Replace with your Web App URL
-    let currentRow = 1; // Tracks the current row in the carousel
+    // 1) Replace with your published CSV link
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/REPLACE_WITH_YOUR_PUBLISHED_LINK/pub?output=csv";
+    
+    // 2) Replace with your Apps Script/Web App URL if you want to POST approvals/revisions
+    const SCRIPT_URL = "https://script.google.com/macros/s/REPLACE_WITH_YOUR_SCRIPT_ID/exec";
 
+    // Tracks the current row in the carousel (1-based index for convenience)
+    let currentRow = 1; 
+    let rows = [];     // We'll store parsed rows globally for reference
+    let swiper;        // We'll keep a reference to the Swiper instance
+
+    // Fetch the CSV from the published Google Sheet
     fetch(SHEET_URL)
       .then(response => response.text())
-      .then(data => {
-        const rows = data.split('\n').slice(1); // Skip header
-        const swiperWrapper = document.querySelector('.swiper-wrapper');
+      .then(csvData => {
+        // Split into lines, ignoring the header row
+        rows = csvData.split("\n").slice(1);
+        
+        const swiperWrapper = document.querySelector(".swiper-wrapper");
 
         rows.forEach((row, index) => {
-          const [name, figmaLink, pngUrl] = row.split(',');
-          const slide = `
+          console.log(`Raw row ${index+1}: ${row}`);
+
+          // Split columns by comma
+          // If your data can have commas in quotes, consider a more robust CSV parser.
+          let parts = row.split(",");
+
+          // Trim each part to remove trailing quotes/spaces
+          parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
+
+          // Destructure expected columns:
+          // e.g. Column A: Name, Column B: FigmaLink, Column C: PNG URL
+          const [name, figmaLink, pngUrl] = parts;
+
+          console.log(`Parsed row ${index+1}: name="${name}", figmaLink="${figmaLink}", pngUrl="${pngUrl}"`);
+
+          // Build slide HTML
+          const slideHTML = `
             <div class="swiper-slide">
               <h3>${name}</h3>
-              <a href="${figmaLink}" target="_blank">
-                <img src="${pngUrl}" alt="${name}" />
+              <a href="${figmaLink || '#'}" target="_blank">
+                <img src="${pngUrl || ''}" alt="${name || 'No Name'}" onerror="this.src=''; console.error('Image failed to load:', '${pngUrl}')"/>
               </a>
             </div>
           `;
-          swiperWrapper.insertAdjacentHTML('beforeend', slide);
+
+          swiperWrapper.insertAdjacentHTML("beforeend", slideHTML);
         });
 
-        // Initialize Swiper
-        const swiper = new Swiper('.swiper-container', {
-          pagination: { el: '.swiper-pagination', clickable: true },
-          navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+        // Initialize Swiper after inserting slides
+        swiper = new Swiper(".swiper-container", {
+          pagination: { el: ".swiper-pagination", clickable: true },
+          navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
           loop: false,
           keyboard: true,
           on: {
             slideChange: () => {
-              currentRow = swiper.activeIndex + 1; // Update current row
+              currentRow = swiper.activeIndex + 1; // Because index is 0-based
+              console.log("Slide changed. Current row:", currentRow);
             }
           }
         });
+
+        // If there's at least one slide, set currentRow = 1
+        if(rows.length > 0) {
+          currentRow = 1;
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching CSV:", err);
       });
 
     function handleApprove() {
@@ -74,27 +164,42 @@
     }
 
     function showRevisionInput() {
-      document.querySelector('.revision-input').style.display = 'block';
+      document.querySelector(".revision-input").style.display = "block";
     }
 
     function handleRevise() {
-      const revisionText = document.getElementById('revisionText').value;
+      const revisionText = document.getElementById("revisionText").value;
       if (revisionText) {
         updateStatus(`Revise: ${revisionText}`);
-        document.querySelector('.revision-input').style.display = 'none';
-        document.getElementById('revisionText').value = ''; // Clear input
+        document.querySelector(".revision-input").style.display = "none";
+        document.getElementById("revisionText").value = "";
+      } else {
+        alert("Please enter revision notes!");
       }
     }
 
+    // Sends the status update to SCRIPT_URL (Apps Script) via a POST
+    // If you don't need to save the status, you can remove this
     function updateStatus(status) {
+      if (!rows[currentRow - 1]) {
+        alert("No row data found. Possibly an empty carousel?");
+        return;
+      }
+
       fetch(SCRIPT_URL, {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify({ row: currentRow, status }),
-        headers: { 'Content-Type': 'application/json' }
+        headers: { "Content-Type": "application/json" }
       })
-        .then(response => response.text())
-        .then(() => alert("Status updated successfully!"))
-        .catch(() => alert("Failed to update status."));
+      .then(response => response.text())
+      .then(msg => {
+        console.log("Response from server:", msg);
+        alert("Status updated successfully!");
+      })
+      .catch(err => {
+        console.error("Failed to update status:", err);
+        alert("Failed to update status.");
+      });
     }
   </script>
 </body>
