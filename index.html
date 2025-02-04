@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Design Approval Gallery</title>
-  <!-- Swiper CSS -->
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
   <style>
     body {
@@ -10,19 +9,16 @@
       padding: 0;
       font-family: sans-serif;
     }
-
     .swiper-container {
       width: 100%;
       height: 80vh;
     }
-
     .swiper-slide {
       text-align: center;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-
     .item-image {
       max-width: 100%;
       max-height: 50vh;
@@ -31,12 +27,10 @@
       border: 1px solid #ccc;
       border-radius: 4px;
     }
-
     .buttons {
       text-align: center;
       margin: 20px 0;
     }
-
     .approve,
     .revise {
       margin: 0 5px;
@@ -47,21 +41,17 @@
       font-size: 14px;
       outline: none;
     }
-
     .approve {
-      background-color: #28a745; /* Green */
+      background-color: #28a745;
     }
-
     .revise {
-      background-color: #007bff; /* Blue */
+      background-color: #007bff;
     }
-
     .revision-input {
       display: none;
       margin-top: 10px;
       text-align: center;
     }
-
     .revision-input textarea {
       width: 300px;
       height: 80px;
@@ -71,7 +61,6 @@
 <body>
   <div class="swiper-container">
     <div class="swiper-wrapper"></div>
-    <!-- Swiper Controls -->
     <div class="swiper-pagination"></div>
     <div class="swiper-button-next"></div>
     <div class="swiper-button-prev"></div>
@@ -86,44 +75,22 @@
     </div>
   </div>
 
-  <!-- Swiper JS -->
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
-    /********************************************************
-     *  1) HARD-CODED FIGMA DETAILS + CSV URL              *
-     ********************************************************/
     const FIGMA_TOKEN = 'figd_DAYYuZvZtH4N22jZoD3jyNdnpOqPk-jfy09qwiLp';
     const FILE_KEY = 'UiwgqmTixQa5iG4lwq15uu';
-
-    // Published CSV link for your "Main Approvals Item" sheet
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
-
-    // REPLACE the direct Apps Script link with your Cloudflare Worker URL
-    // The Worker should forward requests to the Apps Script URL 
-    // and return CORS-friendly headers.
     const SCRIPT_URL = "https://snowman.miro-gonda.workers.dev/";
 
-    // Tracks the current row in the carousel (1-based index for convenience)
-    let currentRow = 2; 
-    let rows = [];     // We'll store the CSV rows globally
-    let swiper;        // Reference to the Swiper instance
+    let currentRow = 1; 
+    let rows = [];
+    let swiper;
 
-    /********************************************************
-     *  2) FETCH CSV, THEN PARSE AND BUILD SLIDES           *
-     ********************************************************/
     fetch(SHEET_URL)
       .then(response => response.text())
       .then(csvData => {
-        // Split into lines, ignoring the header row
         rows = csvData.split("\n").slice(1);
-
-        // We'll map each row to a Promise that:
-        //  1) extracts columns A, B, C
-        //  2) fetches a PNG link from Figma using "FILE_KEY" + "Node ID"
-        //  3) returns slide HTML
         const slidePromises = rows.map((line, index) => processRow(line, index));
-
-        // Wait until all row promises are resolved
         return Promise.all(slidePromises);
       })
       .then(slidesHTML => {
@@ -131,8 +98,6 @@
         slidesHTML.forEach(slideHTML => {
           swiperWrapper.insertAdjacentHTML("beforeend", slideHTML);
         });
-
-        // Initialize Swiper
         swiper = new Swiper(".swiper-container", {
           pagination: { el: ".swiper-pagination", clickable: true },
           navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
@@ -145,7 +110,6 @@
             }
           }
         });
-
         if (slidesHTML.length > 0) {
           currentRow = 1;
         }
@@ -154,48 +118,31 @@
         console.error("Error fetching CSV:", err);
       });
 
-    /********************************************************
-     *  3) PROCESS A SINGLE ROW FROM THE CSV               *
-     ********************************************************/
     function processRow(line, index) {
       let parts = line.split(",");
       parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
-
-      // Column A -> Name, Column B -> Link, Column C -> Node ID
       const [name, link, nodeId] = parts;
-
       if (!nodeId) {
-        // Build slide with no image
         return Promise.resolve(buildSlideHTML(name, link, null));
       }
-
-      // If we have a Node ID, fetch ephemeral PNG from Figma
       return fetchFigmaImage(nodeId)
-        .then(ephemeralLink => {
-          // ephemeralLink could be null if there's an error
-          return buildSlideHTML(name, link, ephemeralLink);
-        })
+        .then(ephemeralLink => buildSlideHTML(name, link, ephemeralLink))
         .catch(err => {
           console.error(`Row ${index + 1}: Error fetching image for node ${nodeId}`, err);
           return buildSlideHTML(name, link, null);
         });
     }
 
-    /********************************************************
-     *  4) BUILD SLIDE HTML                                 *
-     ********************************************************/
     function buildSlideHTML(name, link, imageUrl) {
       const safeName = name || "No Name";
       const hasLink = link && link.startsWith("http");
       const linkSection = hasLink
         ? `<a href="${link}" target="_blank" style="font-size:16px; color:blue; text-decoration:underline;">Open Link</a>`
         : `<p>No Link</p>`;
-
       let imageSection = "";
       if (imageUrl) {
         imageSection = `<img class="item-image" src="${imageUrl}" alt="Figma Node" onerror="this.style.display='none'"/>`;
       }
-
       return `
         <div class="swiper-slide">
           <h3>${safeName}</h3>
@@ -205,17 +152,10 @@
       `;
     }
 
-    /********************************************************
-     *  5) FETCH FIGMA IMAGE VIA /v1/images endpoint        *
-     ********************************************************/
     function fetchFigmaImage(nodeId) {
-      // Hard-coded file key from the constants above
       const apiUrl = `https://api.figma.com/v1/images/${FILE_KEY}?ids=${encodeURIComponent(nodeId)}&format=png`;
-
       return fetch(apiUrl, {
-        headers: {
-          "X-Figma-Token": FIGMA_TOKEN
-        }
+        headers: { "X-Figma-Token": FIGMA_TOKEN }
       })
       .then(resp => {
         if (!resp.ok) {
@@ -228,29 +168,20 @@
           console.warn("No image returned for node:", nodeId, "Response:", json);
           return null;
         }
-        return json.images[nodeId]; // ephemeral link
+        return json.images[nodeId];
       });
     }
 
-    /********************************************************
-     *  6) APPROVE/REVISE BUTTONS                          *
-     ********************************************************/
     function handleApprove() {
-      // 1) Grab the entire row data from CSV
       const line = rows[currentRow - 1];
       if (!line) {
         alert("No row data found. Possibly an empty carousel?");
         return;
       }
-
-      // 2) Parse columns A, B, C (Name, Link, Node ID)
       const parts = line.split(",");
       const parsed = parts.map(p => p.trim().replace(/^"|"$/g, ""));
-      // nodeId is in Column C (index 2)
       const nodeId = parsed[2] || "";
-
-      // 3) Call updateStatus with "Approved" and the nodeId
-      updateStatus("Approved", nodeId);
+      updateStatus("Approved", nodeId, currentRow + 1);
     }
 
     function showRevisionInput() {
@@ -260,7 +191,7 @@
     function handleRevise() {
       const revisionText = document.getElementById("revisionText").value;
       if (revisionText) {
-        updateStatus(`Revise: ${revisionText}`);
+        updateStatus(`Revise: ${revisionText}`, "", currentRow + 1);
         document.querySelector(".revision-input").style.display = "none";
         document.getElementById("revisionText").value = "";
       } else {
@@ -268,17 +199,15 @@
       }
     }
 
-    function updateStatus(status, nodeId = "") {
+    function updateStatus(status, nodeId = "", rowOverride) {
       if (!rows[currentRow - 1]) {
         alert("No row data found. Possibly an empty carousel?");
         return;
       }
-
-      // Send row + status + nodeId to your Cloudflare Worker URL
       fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ 
-          row: currentRow, 
+          row: rowOverride, 
           status: status, 
           nodeId: nodeId 
         }),
