@@ -23,13 +23,6 @@
       justify-content: center;
     }
 
-    img {
-      max-width: 100%;
-      max-height: 65vh;
-      margin: 0 auto;
-      display: block;
-    }
-
     .buttons {
       text-align: center;
       margin: 20px 0;
@@ -87,7 +80,7 @@
   <!-- Swiper JS -->
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
-    // 1) Replace with your published CSV link
+    // 1) Replace with the published CSV link for "Main Approvals Item"
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
     
     // 2) Replace with your Apps Script/Web App URL if you want to POST approvals/revisions
@@ -118,18 +111,21 @@
           parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
 
           // Destructure expected columns:
-          // e.g. Column A: Name, Column B: FigmaLink, Column C: PNG URL
-          const [name, figmaLink, pngUrl] = parts;
+          // Column A: Name
+          // Column B: Link
+          const [name, link] = parts; // only 2 columns expected
 
-          console.log(`Parsed row ${index+1}: name="${name}", figmaLink="${figmaLink}", pngUrl="${pngUrl}"`);
+          console.log(`Parsed row ${index+1}: name="${name}", link="${link}"`);
 
           // Build slide HTML
           const slideHTML = `
             <div class="swiper-slide">
-              <h3>${name}</h3>
-              <a href="${figmaLink || '#'}" target="_blank">
-                <img src="${pngUrl || ''}" alt="${name || 'No Name'}" onerror="this.src=''; console.error('Image failed to load:', '${pngUrl}')"/>
-              </a>
+              <h3>${name || "No Name"}</h3>
+              ${
+                link 
+                ? `<a href="${link}" target="_blank" style="font-size:16px; color:blue; text-decoration:underline;">Open Link</a>` 
+                : `<p>No Link</p>`
+              }
             </div>
           `;
 
@@ -179,13 +175,13 @@
     }
 
     // Sends the status update to SCRIPT_URL (Apps Script) via a POST
-    // If you don't need to save the status, you can remove this
     function updateStatus(status) {
       if (!rows[currentRow - 1]) {
         alert("No row data found. Possibly an empty carousel?");
         return;
       }
 
+      // For demonstration, you may send the 'row' + 'status' to your backend
       fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ row: currentRow, status }),
