@@ -98,7 +98,7 @@
     // Published CSV link for your "Main Approvals Item" sheet
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
 
-    // Apps Script/Web App URL (if you want to POST approvals/revisions)
+    // Apps Script/Web App URL (server) to handle approvals/revisions
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxogZzy6sTVBH40uA9EVbpJ6BqSc0TXrM5XPcaW_6iCTG9EBNNp2HeYwa8IIsSEGOxaPA/exec";
 
     // Tracks the current row in the carousel (1-based index for convenience)
@@ -234,7 +234,21 @@
      *  6) APPROVE/REVISE BUTTONS                          *
      ********************************************************/
     function handleApprove() {
-      updateStatus("Approved");
+      // 1) Grab the entire row data from CSV
+      const line = rows[currentRow - 1];
+      if (!line) {
+        alert("No row data found. Possibly an empty carousel?");
+        return;
+      }
+
+      // 2) Parse columns A, B, C (Name, Link, Node ID)
+      const parts = line.split(",");
+      const parsed = parts.map(p => p.trim().replace(/^"|"$/g, ""));
+      // nodeId is in Column C (index 2)
+      const nodeId = parsed[2] || "";
+
+      // 3) Call updateStatus with "Approved" and the nodeId
+      updateStatus("Approved", nodeId);
     }
 
     function showRevisionInput() {
@@ -252,15 +266,20 @@
       }
     }
 
-    function updateStatus(status) {
+    function updateStatus(status, nodeId = "") {
       if (!rows[currentRow - 1]) {
         alert("No row data found. Possibly an empty carousel?");
         return;
       }
 
+      // Send row + status + nodeId to our Apps Script
       fetch(SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify({ row: currentRow, status }),
+        body: JSON.stringify({ 
+          row: currentRow, 
+          status: status, 
+          nodeId: nodeId 
+        }),
         headers: { "Content-Type": "application/json" }
       })
       .then(response => response.text())
