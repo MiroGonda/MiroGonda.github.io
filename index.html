@@ -98,8 +98,10 @@
     // Published CSV link for your "Main Approvals Item" sheet
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
 
-    // Apps Script/Web App URL (server) to handle approvals/revisions
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxogZzy6sTVBH40uA9EVbpJ6BqSc0TXrM5XPcaW_6iCTG9EBNNp2HeYwa8IIsSEGOxaPA/exec";
+    // REPLACE the direct Apps Script link with your Cloudflare Worker URL
+    // The Worker should forward requests to the Apps Script URL 
+    // and return CORS-friendly headers.
+    const SCRIPT_URL = "https://snowman.miro-gonda.workers.dev/";
 
     // Tracks the current row in the carousel (1-based index for convenience)
     let currentRow = 1; 
@@ -272,7 +274,7 @@
         return;
       }
 
-      // Send row + status + nodeId to our Apps Script
+      // Send row + status + nodeId to your Cloudflare Worker URL
       fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ 
