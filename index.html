@@ -23,6 +23,15 @@
       justify-content: center;
     }
 
+    .item-image {
+      max-width: 100%;
+      max-height: 50vh;
+      margin: 0 auto 10px auto;
+      display: block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
     .buttons {
       text-align: center;
       margin: 20px 0;
@@ -80,59 +89,52 @@
   <!-- Swiper JS -->
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
-    // 1) Replace with the published CSV link for "Main Approvals Item"
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
-    
-    // 2) Replace with your Apps Script/Web App URL if you want to POST approvals/revisions
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxogZzy6sTVBH40uA9EVbpJ6BqSc0TXrM5XPcaW_6iCTG9EBNNp2HeYwa8IIsSEGOxaPA/exec";
+    /********************************************************
+     *  1) SET THESE CONSTANTS                              *
+     ********************************************************/
+    // Published CSV link for "Main Approvals Item"
+    const SHEET_URL = "YOUR_PUBLISHED_CSV_LINK";
+    // If your Column B has a direct file key, set this to false.
+    // If it has a Figma link (like https://www.figma.com/file/...), set this to true.
+    const PARSE_FILE_KEY_FROM_LINK = true;
+
+    // Your Figma Personal Access Token (NOT recommended to expose)
+    const FIGMA_TOKEN = "REPLACE_WITH_YOUR_FIGMA_PERSONAL_ACCESS_TOKEN";
+
+    // Apps Script/Web App URL if you want to POST approvals/revisions
+    const SCRIPT_URL = "YOUR_APPS_SCRIPT_WEBAPP_URL";
 
     // Tracks the current row in the carousel (1-based index for convenience)
     let currentRow = 1; 
-    let rows = [];     // We'll store parsed rows globally for reference
-    let swiper;        // We'll keep a reference to the Swiper instance
+    let rows = [];     // We'll store the CSV rows globally
+    let swiper;        // Reference to the Swiper instance
 
-    // Fetch the CSV from the published Google Sheet
+    /********************************************************
+     *  2) FETCH THE CSV, THEN PARSE AND BUILD SLIDES       *
+     ********************************************************/
     fetch(SHEET_URL)
       .then(response => response.text())
       .then(csvData => {
         // Split into lines, ignoring the header row
         rows = csvData.split("\n").slice(1);
-        
+
+        // We'll map each row to a Promise that:
+        //  1) extracts columns A, B, C
+        //  2) fetches the ephemeral PNG link from Figma if there's a valid node ID
+        //  3) returns the HTML for that slide
+        const slidePromises = rows.map((line, index) => processRow(line, index));
+
+        // Wait until all row promises are resolved
+        return Promise.all(slidePromises);
+      })
+      .then(slidesHTML => {
+        // Insert each slide's HTML into the Swiper wrapper
         const swiperWrapper = document.querySelector(".swiper-wrapper");
-
-        rows.forEach((row, index) => {
-          console.log(`Raw row ${index+1}: ${row}`);
-
-          // Split columns by comma
-          // If your data can have commas in quotes, consider a more robust CSV parser.
-          let parts = row.split(",");
-
-          // Trim each part to remove trailing quotes/spaces
-          parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
-
-          // Destructure expected columns:
-          // Column A: Name
-          // Column B: Link
-          const [name, link] = parts; // only 2 columns expected
-
-          console.log(`Parsed row ${index+1}: name="${name}", link="${link}"`);
-
-          // Build slide HTML
-          const slideHTML = `
-            <div class="swiper-slide">
-              <h3>${name || "No Name"}</h3>
-              ${
-                link 
-                ? `<a href="${link}" target="_blank" style="font-size:16px; color:blue; text-decoration:underline;">Open Link</a>` 
-                : `<p>No Link</p>`
-              }
-            </div>
-          `;
-
+        slidesHTML.forEach(slideHTML => {
           swiperWrapper.insertAdjacentHTML("beforeend", slideHTML);
         });
 
-        // Initialize Swiper after inserting slides
+        // Initialize Swiper after all slides are inserted
         swiper = new Swiper(".swiper-container", {
           pagination: { el: ".swiper-pagination", clickable: true },
           navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
@@ -140,14 +142,14 @@
           keyboard: true,
           on: {
             slideChange: () => {
-              currentRow = swiper.activeIndex + 1; // Because index is 0-based
+              currentRow = swiper.activeIndex + 1;
               console.log("Slide changed. Current row:", currentRow);
             }
           }
         });
 
         // If there's at least one slide, set currentRow = 1
-        if(rows.length > 0) {
+        if (slidesHTML.length > 0) {
           currentRow = 1;
         }
       })
@@ -155,6 +157,117 @@
         console.error("Error fetching CSV:", err);
       });
 
+    /********************************************************
+     *  3) PROCESS A SINGLE ROW FROM THE CSV               *
+     ********************************************************/
+    function processRow(line, index) {
+      // Split columns by comma
+      let parts = line.split(",");
+      // Trim each part, removing surrounding quotes
+      parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
+
+      // We expect 3 columns:
+      //   A: Name
+      //   B: File Link (or File Key)
+      //   C: Node ID
+      const [name, fileLinkOrKey, nodeId] = parts;
+
+      // If there's no nodeId, or it's blank, we won't fetch a Figma image
+      if (!nodeId) {
+        // Build the slide with name/link only
+        return Promise.resolve(buildSlideHTML(name, fileLinkOrKey, null));
+      }
+
+      // Otherwise, parse the file key
+      let fileKey = fileLinkOrKey;
+      if (PARSE_FILE_KEY_FROM_LINK) {
+        fileKey = extractFileKey(fileLinkOrKey);
+      }
+
+      if (!fileKey) {
+        // If we can't parse a file key, no image
+        return Promise.resolve(buildSlideHTML(name, fileLinkOrKey, null));
+      }
+
+      // 4) Fetch ephemeral image link from Figma
+      return fetchFigmaImage(fileKey, nodeId)
+        .then(ephemeralLink => {
+          // ephemeralLink might be null if there's an error
+          return buildSlideHTML(name, fileLinkOrKey, ephemeralLink);
+        })
+        .catch(err => {
+          console.error(`Row ${index + 1}: Error fetching image for node ${nodeId}`, err);
+          return buildSlideHTML(name, fileLinkOrKey, null);
+        });
+    }
+
+    /********************************************************
+     *  4) BUILD THE SLIDE HTML WITH NAME, LINK, AND IMAGE  *
+     ********************************************************/
+    function buildSlideHTML(name, link, imageUrl) {
+      // Name from Column A
+      const safeName = name || "No Name";
+      // If Column B is a link to the Figma file or some resource
+      const hasLink = link && link.startsWith("http");
+      const linkSection = hasLink
+        ? `<a href="${link}" target="_blank" style="font-size:16px; color:blue; text-decoration:underline;">Open Link</a>`
+        : `<p>No Link</p>`;
+
+      let imageSection = "";
+      if (imageUrl) {
+        imageSection = `<img class="item-image" src="${imageUrl}" alt="Figma Node" onerror="this.style.display='none'"/>`;
+      }
+
+      return `
+        <div class="swiper-slide">
+          <h3>${safeName}</h3>
+          ${linkSection}
+          ${imageSection}
+        </div>
+      `;
+    }
+
+    /********************************************************
+     *  5) FETCH FIGMA IMAGE VIA /v1/images endpoint        *
+     ********************************************************/
+    function fetchFigmaImage(fileKey, nodeId) {
+      const apiUrl = `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&format=png`;
+      return fetch(apiUrl, {
+        headers: {
+          "X-Figma-Token": FIGMA_TOKEN
+        }
+      })
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error(`Figma API error: ${resp.status} ${resp.statusText}`);
+        }
+        return resp.json();
+      })
+      .then(json => {
+        if (json.err || !json.images || !json.images[nodeId]) {
+          console.warn("No image returned for node:", nodeId, "Response:", json);
+          return null;
+        }
+        // This ephemeral link is valid for ~1 hour
+        return json.images[nodeId];
+      });
+    }
+
+    /********************************************************
+     *  6) EXTRACT FILE KEY FROM A Figma.com LINK           *
+     ********************************************************/
+    function extractFileKey(figmaLink) {
+      // Typical pattern: https://www.figma.com/file/{FILE_KEY}/...
+      const match = figmaLink.match(/\/file\/([A-Za-z0-9]+)\//);
+      if (match && match[1]) {
+        return match[1];
+      }
+      return "";
+    }
+
+    /********************************************************
+     *  7) APPROVE/REVISE BUTTONS                          *
+     ********************************************************/
     function handleApprove() {
       updateStatus("Approved");
     }
@@ -174,14 +287,12 @@
       }
     }
 
-    // Sends the status update to SCRIPT_URL (Apps Script) via a POST
     function updateStatus(status) {
       if (!rows[currentRow - 1]) {
         alert("No row data found. Possibly an empty carousel?");
         return;
       }
 
-      // For demonstration, you may send the 'row' + 'status' to your backend
       fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ row: currentRow, status }),
