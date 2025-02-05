@@ -361,6 +361,7 @@
                 const approveButton = reviewItem.querySelector('.buttons .btn.approve');
                 const reviseButton = reviewItem.querySelector('.buttons .btn.revise');
                 const submitButton = reviewItem.querySelector('.feedback-container .btn.submit');
+                const itemImg = reviewItem.querySelector('.item-frame .item-frame-img');
                 
                 console.log('Submit: ',submitButton)
 
@@ -374,6 +375,17 @@
 
                 if(submitButton) {
                   submitButton.onclick = handleApprove;
+                }
+
+                if(itemImg) {
+                  itemImg.addEventListener('mousemove', (event) => {
+                    const rect = itemImg.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    const coordinates = { x: Math.round(x), y: Math.round(y) };
+
+                    console.log(coordinates);
+                  })
                 }
               });
             }
@@ -417,7 +429,7 @@
       if (imageUrl) {
         imageSection = `
           <div class="item-frame">
-            <img src="${imageUrl}" alt="Figma Node" ></img>
+            <img class="item-frame-img" src="${imageUrl}" alt="Figma Node" ></img>
           </div>
         `;
       }
@@ -581,7 +593,6 @@
 
       showInputField(inputField, false);
     }
-
   
   </script>
   <script>
