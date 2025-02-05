@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>Design Approval Gallery</title>
-  <!-- Swiper CSS -->
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
   <style>
     body {
@@ -10,31 +9,28 @@
       padding: 0;
       font-family: sans-serif;
     }
-
     .swiper-container {
       width: 100%;
       height: 80vh;
     }
-
     .swiper-slide {
       text-align: center;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-
-    img {
+    .item-image {
       max-width: 100%;
-      max-height: 65vh;
-      margin: 0 auto;
+      max-height: 50vh;
+      margin: 0 auto 10px auto;
       display: block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
-
     .buttons {
       text-align: center;
       margin: 20px 0;
     }
-
     .approve,
     .revise {
       margin: 0 5px;
@@ -45,21 +41,17 @@
       font-size: 14px;
       outline: none;
     }
-
     .approve {
-      background-color: #28a745; /* Green */
+      background-color: #28a745;
     }
-
     .revise {
-      background-color: #007bff; /* Blue */
+      background-color: #007bff;
     }
-
     .revision-input {
       display: none;
       margin-top: 10px;
       text-align: center;
     }
-
     .revision-input textarea {
       width: 300px;
       height: 80px;
@@ -69,7 +61,6 @@
 <body>
   <div class="swiper-container">
     <div class="swiper-wrapper"></div>
-    <!-- Swiper Controls -->
     <div class="swiper-pagination"></div>
     <div class="swiper-button-next"></div>
     <div class="swiper-button-prev"></div>
@@ -84,59 +75,29 @@
     </div>
   </div>
 
-  <!-- Swiper JS -->
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
-    // 1) Replace with your published CSV link
+    const FIGMA_TOKEN = 'figd_DAYYuZvZtH4N22jZoD3jyNdnpOqPk-jfy09qwiLp';
+    const FILE_KEY = 'UiwgqmTixQa5iG4lwq15uu';
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
-    
-    // 2) Replace with your Apps Script/Web App URL if you want to POST approvals/revisions
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxogZzy6sTVBH40uA9EVbpJ6BqSc0TXrM5XPcaW_6iCTG9EBNNp2HeYwa8IIsSEGOxaPA/exec";
+    const SCRIPT_URL = "https://snowman.miro-gonda.workers.dev/";
 
-    // Tracks the current row in the carousel (1-based index for convenience)
     let currentRow = 1; 
-    let rows = [];     // We'll store parsed rows globally for reference
-    let swiper;        // We'll keep a reference to the Swiper instance
+    let rows = [];
+    let swiper;
 
-    // Fetch the CSV from the published Google Sheet
     fetch(SHEET_URL)
       .then(response => response.text())
       .then(csvData => {
-        // Split into lines, ignoring the header row
         rows = csvData.split("\n").slice(1);
-        
+        const slidePromises = rows.map((line, index) => processRow(line, index));
+        return Promise.all(slidePromises);
+      })
+      .then(slidesHTML => {
         const swiperWrapper = document.querySelector(".swiper-wrapper");
-
-        rows.forEach((row, index) => {
-          console.log(`Raw row ${index+1}: ${row}`);
-
-          // Split columns by comma
-          // If your data can have commas in quotes, consider a more robust CSV parser.
-          let parts = row.split(",");
-
-          // Trim each part to remove trailing quotes/spaces
-          parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
-
-          // Destructure expected columns:
-          // e.g. Column A: Name, Column B: FigmaLink, Column C: PNG URL
-          const [name, figmaLink, pngUrl] = parts;
-
-          console.log(`Parsed row ${index+1}: name="${name}", figmaLink="${figmaLink}", pngUrl="${pngUrl}"`);
-
-          // Build slide HTML
-          const slideHTML = `
-            <div class="swiper-slide">
-              <h3>${name}</h3>
-              <a href="${figmaLink || '#'}" target="_blank">
-                <img src="${pngUrl || ''}" alt="${name || 'No Name'}" onerror="this.src=''; console.error('Image failed to load:', '${pngUrl}')"/>
-              </a>
-            </div>
-          `;
-
+        slidesHTML.forEach(slideHTML => {
           swiperWrapper.insertAdjacentHTML("beforeend", slideHTML);
         });
-
-        // Initialize Swiper after inserting slides
         swiper = new Swiper(".swiper-container", {
           pagination: { el: ".swiper-pagination", clickable: true },
           navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
@@ -144,14 +105,12 @@
           keyboard: true,
           on: {
             slideChange: () => {
-              currentRow = swiper.activeIndex + 1; // Because index is 0-based
+              currentRow = swiper.activeIndex + 1;
               console.log("Slide changed. Current row:", currentRow);
             }
           }
         });
-
-        // If there's at least one slide, set currentRow = 1
-        if(rows.length > 0) {
+        if (slidesHTML.length > 0) {
           currentRow = 1;
         }
       })
@@ -159,8 +118,70 @@
         console.error("Error fetching CSV:", err);
       });
 
+    function processRow(line, index) {
+      let parts = line.split(",");
+      parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
+      const [name, link, nodeId] = parts;
+      if (!nodeId) {
+        return Promise.resolve(buildSlideHTML(name, link, null));
+      }
+      return fetchFigmaImage(nodeId)
+        .then(ephemeralLink => buildSlideHTML(name, link, ephemeralLink))
+        .catch(err => {
+          console.error(`Row ${index + 1}: Error fetching image for node ${nodeId}`, err);
+          return buildSlideHTML(name, link, null);
+        });
+    }
+
+    function buildSlideHTML(name, link, imageUrl) {
+      const safeName = name || "No Name";
+      const hasLink = link && link.startsWith("http");
+      const linkSection = hasLink
+        ? `<a href="${link}" target="_blank" style="font-size:16px; color:blue; text-decoration:underline;">Open Link</a>`
+        : `<p>No Link</p>`;
+      let imageSection = "";
+      if (imageUrl) {
+        imageSection = `<img class="item-image" src="${imageUrl}" alt="Figma Node" onerror="this.style.display='none'"/>`;
+      }
+      return `
+        <div class="swiper-slide">
+          <h3>${safeName}</h3>
+          ${linkSection}
+          ${imageSection}
+        </div>
+      `;
+    }
+
+    function fetchFigmaImage(nodeId) {
+      const apiUrl = `https://api.figma.com/v1/images/${FILE_KEY}?ids=${encodeURIComponent(nodeId)}&format=png`;
+      return fetch(apiUrl, {
+        headers: { "X-Figma-Token": FIGMA_TOKEN }
+      })
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error(`Figma API error: ${resp.status} ${resp.statusText}`);
+        }
+        return resp.json();
+      })
+      .then(json => {
+        if (json.err || !json.images || !json.images[nodeId]) {
+          console.warn("No image returned for node:", nodeId, "Response:", json);
+          return null;
+        }
+        return json.images[nodeId];
+      });
+    }
+
     function handleApprove() {
-      updateStatus("Approved");
+      const line = rows[currentRow - 1];
+      if (!line) {
+        alert("No row data found. Possibly an empty carousel?");
+        return;
+      }
+      const parts = line.split(",");
+      const parsed = parts.map(p => p.trim().replace(/^"|"$/g, ""));
+      const nodeId = parsed[2] || "";
+      updateStatus("Approved", nodeId, currentRow + 1);
     }
 
     function showRevisionInput() {
@@ -170,7 +191,7 @@
     function handleRevise() {
       const revisionText = document.getElementById("revisionText").value;
       if (revisionText) {
-        updateStatus(`Revise: ${revisionText}`);
+        updateStatus(`Revise: ${revisionText}`, "", currentRow + 1);
         document.querySelector(".revision-input").style.display = "none";
         document.getElementById("revisionText").value = "";
       } else {
@@ -178,17 +199,18 @@
       }
     }
 
-    // Sends the status update to SCRIPT_URL (Apps Script) via a POST
-    // If you don't need to save the status, you can remove this
-    function updateStatus(status) {
+    function updateStatus(status, nodeId = "", rowOverride) {
       if (!rows[currentRow - 1]) {
         alert("No row data found. Possibly an empty carousel?");
         return;
       }
-
       fetch(SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify({ row: currentRow, status }),
+        body: JSON.stringify({ 
+          row: rowOverride, 
+          status: status, 
+          nodeId: nodeId 
+        }),
         headers: { "Content-Type": "application/json" }
       })
       .then(response => response.text())
