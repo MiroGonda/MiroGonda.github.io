@@ -224,6 +224,7 @@
     fetch(SHEET_URL)
       .then(response => response.text())
       .then(csvData => {
+        // We now assume 4 columns in each row: [ Name, FigmaLink, NodeId, SheetValue? ]
         rows = csvData.split("\n").slice(1);
         const slidePromises = rows.map((line, index) => processRow(line, index));
         return Promise.all(slidePromises);
@@ -283,21 +284,22 @@
       });
 
     function processRow(line, index) {
+      // Expecting 4 columns now: name, link, nodeId, sheetValue
       let parts = line.split(",");
       parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
-      const [name, link, nodeId] = parts;
+      const [name, link, nodeId, sheetValue] = parts; 
       if (!nodeId) {
-        return Promise.resolve(buildSlideHTML(name, link, null));
+        return Promise.resolve(buildSlideHTML(name, link, "", sheetValue));
       }
       return fetchFigmaImage(nodeId)
-        .then(ephemeralLink => buildSlideHTML(name, link, ephemeralLink))
+        .then(ephemeralLink => buildSlideHTML(name, link, ephemeralLink, sheetValue))
         .catch(err => {
           console.error(`Row ${index + 1}: Error fetching image for node ${nodeId}`, err);
-          return buildSlideHTML(name, link, null);
+          return buildSlideHTML(name, link, "", sheetValue);
         });
     }
 
-    function buildSlideHTML(name, link, imageUrl) {
+    function buildSlideHTML(name, link, imageUrl, sheetValue) {
       const safeName = name || "No Name";
       const hasLink = link && link.startsWith("http");
       const linkSection = hasLink
@@ -313,7 +315,7 @@
       }
       return `
         <div class="swiper-slide">
-          <div class="review-item">
+          <div class="review-item" data-sheet-value="${sheetValue}" data-link="${link}">
             <h3 class="item-name">${safeName}</h3>
             ${linkSection}
             ${imageSection}
@@ -392,24 +394,79 @@
       const reviewItem = feedbackContainer.parentElement;
       const itemFrame = reviewItem.querySelector('.item-frame');
 
+      // Read the row
       const line = rows[currentRow - 1];
       if (!line) {
         alert("No row data found.");
         return;
       }
+      // Now we have 4 columns
       const parts = line.split(",");
       const parsed = parts.map(p => p.trim().replace(/^"|"$/g, ""));
+      // [ name, link, nodeId, sheetValue ]
+      const name = parsed[0];
+      const figmaLink = parsed[1];
       const nodeId = parsed[2] || "";
+      const sheetValue = parsed[3] || "";
 
       let finalStatus = "";
       if (itemFrame.classList.contains('-approved')) {
         finalStatus = `Approved: ${feedbackText}`;
-      } else if (itemFrame.classList.contains('-revision')) {
+
+        // If the sheetValue is "➜ Sketch: Working on it", post a Figma comment "sketch ok"
+        if (sheetValue === "➜ Sketch: Working on it") {
+          postFigmaComment(figmaLink, "sketch ok");
+        }
+      } 
+      else if (itemFrame.classList.contains('-revision')) {
         finalStatus = `Revise: ${feedbackText}`;
-      } else {
+      } 
+      else {
         finalStatus = feedbackText;
       }
+
       updateStatus(finalStatus, nodeId, currentRow + 1);
+    }
+
+    // Post a top-level comment to the Figma file link
+    async function postFigmaComment(figmaLink, message) {
+      try {
+        // Extract the file key from figmaLink => https://www.figma.com/file/FILE_KEY/...
+        const fileKey = extractFileKeyFromLink(figmaLink);
+        if (!fileKey) {
+          console.log("Could not parse fileKey from", figmaLink);
+          return;
+        }
+        // POST /v1/files/{file_key}/comments
+        const url = `https://api.figma.com/v1/files/${fileKey}/comments`;
+        const body = { message };
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: {
+            "X-Figma-Token": FIGMA_TOKEN,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body)
+        });
+        if (!resp.ok) {
+          console.error("Figma comment error:", await resp.text());
+        } else {
+          console.log("Posted Figma comment:", message, "to fileKey:", fileKey);
+        }
+      } catch (err) {
+        console.error("Error in postFigmaComment:", err);
+      }
+    }
+
+    // Attempt to extract the file key from a typical Figma link
+    // e.g. "https://www.figma.com/file/UiwgqmTixQa5iG4lwq15uu/MyFileName?node-id=36%3A1713"
+    function extractFileKeyFromLink(url) {
+      // match /file/<key>/...
+      const match = url.match(/\/file\/([A-Za-z0-9]+)\//);
+      if (match && match[1]) {
+        return match[1];
+      }
+      return "";
     }
 
     function updateStatus(status, nodeId = "", rowOverride) {
