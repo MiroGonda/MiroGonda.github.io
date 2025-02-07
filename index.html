@@ -6,7 +6,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
-
   <style>
     body {
       margin: 0;
@@ -63,9 +62,6 @@
       width: 300px;
       height: 80px;
     }
-
-    /* Additional styling for fonts and layout below... */
-
     .ibm-plex-sans-thin { font-family: "IBM Plex Sans", sans-serif; font-weight: 100; }
     .ibm-plex-sans-extralight { font-family: "IBM Plex Sans", sans-serif; font-weight: 200; }
     .ibm-plex-sans-light { font-family: "IBM Plex Sans", sans-serif; font-weight: 300; }
@@ -73,6 +69,13 @@
     .ibm-plex-sans-medium { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; }
     .ibm-plex-sans-semibold { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
     .ibm-plex-sans-bold { font-family: "IBM Plex Sans", sans-serif; font-weight: 700; }
+    .ibm-plex-sans-thin-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 100; font-style: italic; }
+    .ibm-plex-sans-extralight-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 200; font-style: italic; }
+    .ibm-plex-sans-light-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 300; font-style: italic; }
+    .ibm-plex-sans-regular-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 400; font-style: italic; }
+    .ibm-plex-sans-medium-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; font-style: italic; }
+    .ibm-plex-sans-semibold-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; font-style: italic; }
+    .ibm-plex-sans-bold-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 700; font-style: italic; }
     .container {
       min-height: 100vh;
       width: 100%;
@@ -210,17 +213,13 @@
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
     const FIGMA_TOKEN = 'figd_DAYYuZvZtH4N22jZoD3jyNdnpOqPk-jfy09qwiLp';
-    const FILE_KEY = 'UiwgqmTixQa5iG4lwq15uu';
-    // CSV assumed to have 4 columns: [ Name, FigmaLink, NodeId, sheetValue? ]
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
-
     let currentRow = 1; 
     let rows = [];
-    let swiper;
 
-    fetch(SHEET_URL)
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv")
       .then(response => response.text())
       .then(csvData => {
+        // We assume 4 columns: [Name, figmaLink, nodeId, sheetValue]
         rows = csvData.split("\n").slice(1);
         const slidePromises = rows.map((line, index) => processRow(line, index));
         return Promise.all(slidePromises);
@@ -230,7 +229,7 @@
         slidesHTML.forEach(slideHTML => {
           swiperWrapper.insertAdjacentHTML("beforeend", slideHTML);
         });
-        swiper = new Swiper(".swiper-container", {
+        const swiper = new Swiper(".swiper-container", {
           pagination: { el: ".swiper-pagination", clickable: true },
           navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
           slidesPerView: 1,
@@ -280,38 +279,28 @@
       });
 
     function processRow(line, index) {
+      // parse the 4 columns: name, figmaLink, nodeId, sheetValue
       let parts = line.split(",");
       parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
-      // [ name, figmaLink, nodeId, sheetValue ]
       const [name, figmaLink, nodeId, sheetValue] = parts;
-      return fetchFigmaImage(nodeId).then(imageUrl => {
-        return buildSlideHTML(name, figmaLink, imageUrl, sheetValue);
-      }).catch(err => {
-        console.error(`Row ${index + 1}: Error fetching image for node ${nodeId}`, err);
-        return buildSlideHTML(name, figmaLink, "", sheetValue);
-      });
+      return Promise.resolve(buildSlideHTML(name, figmaLink, nodeId, sheetValue));
     }
 
-    function buildSlideHTML(name, link, imageUrl, sheetValue) {
+    function buildSlideHTML(name, figmaLink, nodeId, sheetValue) {
       const safeName = name || "No Name";
-      const hasLink = link && link.startsWith("http");
+      const hasLink = figmaLink && figmaLink.startsWith("http");
       const linkSection = hasLink
-        ? `<div class="link-container">🔗 <a href="${link}" target="_blank" class="item-link">${link}</a></div>`
+        ? `<div class="link-container">🔗 <a href="${figmaLink}" target="_blank" class="item-link">${figmaLink}</a></div>`
         : `<p>No Link</p>`;
-      let imageSection = "";
-      if (imageUrl) {
-        imageSection = `
-          <div class="item-frame">
-            <img class="item-frame-img" src="${imageUrl}" alt="Figma Node" />
-          </div>
-        `;
-      }
       return `
         <div class="swiper-slide">
-          <div class="review-item" data-sheet-value="${sheetValue}" data-figma-link="${link}">
+          <div class="review-item" 
+               data-figma-link="${figmaLink}" 
+               data-node-id="${nodeId}" 
+               data-sheet-value="${sheetValue}">
             <h3 class="item-name">${safeName}</h3>
             ${linkSection}
-            ${imageSection}
+            <div class="item-frame"></div>
             <div class="buttons">
               <button class="btn approve">Approve</button>
               <button class="btn revise">Revise</button>
@@ -323,28 +312,6 @@
           </div>
         </div>
       `;
-    }
-
-    function fetchFigmaImage(nodeId) {
-      // If there's no nodeId, skip
-      if (!nodeId) return Promise.resolve("");
-      const apiUrl = `https://api.figma.com/v1/images/${FILE_KEY}?ids=${encodeURIComponent(nodeId)}&format=png`;
-      return fetch(apiUrl, {
-        headers: { "X-Figma-Token": FIGMA_TOKEN }
-      })
-      .then(resp => {
-        if (!resp.ok) {
-          throw new Error(`Figma API error: ${resp.status} ${resp.statusText}`);
-        }
-        return resp.json();
-      })
-      .then(json => {
-        if (json.err || !json.images || !json.images[nodeId]) {
-          console.warn("No image returned for node:", nodeId, "Response:", json);
-          return "";
-        }
-        return json.images[nodeId];
-      });
     }
 
     function onApproveClick(event) {
@@ -388,28 +355,46 @@
       const feedbackText = feedbackContainer.querySelector('.input').value;
       const reviewItem = feedbackContainer.parentElement;
       const itemFrame = reviewItem.querySelector('.item-frame');
-      const sheetValue = reviewItem.getAttribute('data-sheet-value') || "";
-      const figmaLink = reviewItem.getAttribute('data-figma-link') || "";
 
-      // If itemFrame is approved & sheetValue == "➜ Sketch: Working on it", post a Figma comment "sketch ok"
-      if (itemFrame.classList.contains('-approved') && sheetValue === "➜ Sketch: Working on it") {
-        postFigmaComment(figmaLink, "sketch ok");
-      }
-      
-      // If revise, we do nothing with the sheetValue for now
+      // read dataset from DOM
+      const figmaLink = reviewItem.dataset.figmaLink || "";
+      const nodeId = reviewItem.dataset.nodeId || "";
+      const sheetValue = reviewItem.dataset.sheetValue || "";
 
-      alert("Thank you! No sheet update, but your feedback was recorded locally.");
+      if (itemFrame.classList.contains('-approved')) {
+        // If the sheetValue is "➜ Sketch: Working on it", post a reply to the existing thread: "sketch ok"
+        if (sheetValue === "➜ Sketch: Working on it") {
+          // post a reply to the existing thread
+          postReplyToExistingThread(figmaLink, "sketch ok");
+        }
+      } 
+      // If revision, do nothing special for now
+
+      // We are not updating the sheet anymore, so no calls to updateStatus or anything.
+      alert("Feedback submitted!");
     }
 
-    async function postFigmaComment(figmaLink, message) {
+    // Attempt to post a reply to an existing Figma comment thread if #commentID is present
+    async function postReplyToExistingThread(figmaLink, message) {
+      const fileKey = parseFileKeyFromLink(figmaLink);
+      const commentId = parseCommentIdFromLink(figmaLink);
+
+      if (!fileKey) {
+        console.log("Could not parse fileKey from", figmaLink);
+        return;
+      }
+      if (!commentId) {
+        console.log("No comment ID (#...) found in link", figmaLink);
+        return;
+      }
+
+      const url = `https://api.figma.com/v1/files/${fileKey}/comments`;
+      const body = {
+        message: message,
+        parent_id: commentId
+      };
+
       try {
-        const fileKey = extractFileKeyFromLink(figmaLink);
-        if (!fileKey) {
-          console.log("Could not parse fileKey from", figmaLink);
-          return;
-        }
-        const url = `https://api.figma.com/v1/files/${fileKey}/comments`;
-        const body = { message };
         const resp = await fetch(url, {
           method: "POST",
           headers: {
@@ -419,20 +404,31 @@
           body: JSON.stringify(body)
         });
         if (!resp.ok) {
-          console.error("Figma comment error:", await resp.text());
+          const errorText = await resp.text();
+          console.error("Figma comment API error:", resp.status, errorText);
         } else {
-          console.log("Posted Figma comment:", message, "to fileKey:", fileKey);
+          console.log(`Posted reply "${message}" to comment thread #${commentId}`);
         }
       } catch (err) {
-        console.error("Error in postFigmaComment:", err);
+        console.error("Error posting Figma reply:", err);
       }
     }
 
-    function extractFileKeyFromLink(url) {
-      // Typical pattern: https://www.figma.com/file/<FILE_KEY>/...
-      const match = url.match(/\/file\/([A-Za-z0-9]+)\//);
-      if (match && match[1]) {
-        return match[1];
+    // parse file key from something like ".../file/UiwgqmTixQa5iG4lwq15uu?node-id=..."
+    // or ".../design/FILEKEY?..."
+    function parseFileKeyFromLink(figmaLink) {
+      let match = figmaLink.match(/\/file\/([A-Za-z0-9]+)(\?|\/)/);
+      if (match && match[1]) return match[1];
+      match = figmaLink.match(/\/design\/([A-Za-z0-9]+)(\?|\/)/);
+      if (match && match[1]) return match[1];
+      return "";
+    }
+
+    // parse comment ID from something like "#1117870207"
+    function parseCommentIdFromLink(figmaLink) {
+      const hashMatch = figmaLink.match(/#(\d+)/);
+      if (hashMatch && hashMatch[1]) {
+        return hashMatch[1];
       }
       return "";
     }
