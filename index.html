@@ -214,13 +214,14 @@
   <script>
     const FIGMA_TOKEN = 'figd_DAYYuZvZtH4N22jZoD3jyNdnpOqPk-jfy09qwiLp';
     const FILE_KEY = 'UiwgqmTixQa5iG4lwq15uu';
+    // CSV feed
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
-    const SCRIPT_URL = "https://snowman.miro-gonda.workers.dev/";
 
     let currentRow = 1; 
     let rows = [];
     let swiper;
 
+    // 1) Load the CSV data
     fetch(SHEET_URL)
       .then(response => response.text())
       .then(csvData => {
@@ -283,6 +284,7 @@
       });
 
     function processRow(line, index) {
+      // For demonstration, we assume the CSV has 3 columns: [Name, link, nodeId]
       let parts = line.split(",");
       parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
       const [name, link, nodeId] = parts;
@@ -392,15 +394,6 @@
       const reviewItem = feedbackContainer.parentElement;
       const itemFrame = reviewItem.querySelector('.item-frame');
 
-      const line = rows[currentRow - 1];
-      if (!line) {
-        alert("No row data found.");
-        return;
-      }
-      const parts = line.split(",");
-      const parsed = parts.map(p => p.trim().replace(/^"|"$/g, ""));
-      const nodeId = parsed[2] || "";
-
       let finalStatus = "";
       if (itemFrame.classList.contains('-approved')) {
         finalStatus = `Approved: ${feedbackText}`;
@@ -409,32 +402,10 @@
       } else {
         finalStatus = feedbackText;
       }
-      updateStatus(finalStatus, nodeId, currentRow + 1);
-    }
-
-    function updateStatus(status, nodeId = "", rowOverride) {
-      if (!rows[currentRow - 1]) {
-        alert("No row data found.");
-        return;
-      }
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ 
-          row: rowOverride, 
-          status: status, 
-          nodeId: nodeId 
-        }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(response => response.text())
-      .then(msg => {
-        console.log("Response from server:", msg);
-        alert("Status updated successfully!");
-      })
-      .catch(err => {
-        console.error("Failed to update status:", err);
-        alert("Failed to update status.");
-      });
+      // -------------- NO SHEET UPDATE --------------
+      // We no longer call updateStatus or any fetch to SCRIPT_URL
+      // Just show user a success message
+      alert(`Feedback submitted!\n${finalStatus}`);
     }
   </script>
 </body>
