@@ -5,13 +5,12 @@
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
- 
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 0;
-      font-family: sans-serif;
+      font-family: "IBM Plex Sans", sans-serif;
     }
     .swiper-container {
       width: 100%;
@@ -23,11 +22,9 @@
       flex-direction: column;
       justify-content: center;
     }
-
     .swiper-pagination {
       display: none;
     }
-
     .item-image {
       max-width: 100%;
       max-height: 50vh;
@@ -65,128 +62,48 @@
       width: 300px;
       height: 80px;
     }
-  </style>
-  <style>
-    .ibm-plex-sans-thin {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 100;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-extralight {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 200;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-light {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 300;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-regular {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 400;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-medium {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 500;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-semibold {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 600;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-bold {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 700;
-      font-style: normal;
-    }
-
-    .ibm-plex-sans-thin-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 100;
-      font-style: italic;
-    }
-
-    .ibm-plex-sans-extralight-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 200;
-      font-style: italic;
-    }
-
-    .ibm-plex-sans-light-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 300;
-      font-style: italic;
-    }
-
-    .ibm-plex-sans-regular-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 400;
-      font-style: italic;
-    }
-
-    .ibm-plex-sans-medium-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 500;
-      font-style: italic;
-    }
-
-    .ibm-plex-sans-semibold-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 600;
-      font-style: italic;
-    }
-
-    .ibm-plex-sans-bold-italic {
-      font-family: "IBM Plex Sans", serif;
-      font-weight: 700;
-      font-style: italic;
-    }
-
-  </style>
-  <style>
+    .ibm-plex-sans-thin { font-family: "IBM Plex Sans", sans-serif; font-weight: 100; }
+    .ibm-plex-sans-extralight { font-family: "IBM Plex Sans", sans-serif; font-weight: 200; }
+    .ibm-plex-sans-light { font-family: "IBM Plex Sans", sans-serif; font-weight: 300; }
+    .ibm-plex-sans-regular { font-family: "IBM Plex Sans", sans-serif; font-weight: 400; }
+    .ibm-plex-sans-medium { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; }
+    .ibm-plex-sans-semibold { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; }
+    .ibm-plex-sans-bold { font-family: "IBM Plex Sans", sans-serif; font-weight: 700; }
+    .ibm-plex-sans-thin-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 100; font-style: italic; }
+    .ibm-plex-sans-extralight-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 200; font-style: italic; }
+    .ibm-plex-sans-light-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 300; font-style: italic; }
+    .ibm-plex-sans-regular-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 400; font-style: italic; }
+    .ibm-plex-sans-medium-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 500; font-style: italic; }
+    .ibm-plex-sans-semibold-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; font-style: italic; }
+    .ibm-plex-sans-bold-italic { font-family: "IBM Plex Sans", sans-serif; font-weight: 700; font-style: italic; }
     .container {
       min-height: 100vh;
       width: 100%;
       padding: 104px 0px;
     }
-
     .review-item > .item-name,
     .review-item > .link-container {
       text-align: center;
     }
-
     .review-item > .link-container {
       margin-top: 12px;
     }
-
     .review-item >.item-frame { 
       margin-top: 48px;
       min-height: 300px;
     }
-
     .review-item > .buttons {
       margin-top: 48px;
     }
-
     .item-name {
-      font-family: "IBM Plex Sans", serif;
+      font-family: "IBM Plex Sans", sans-serif;
       font-size: 2rem;
       font-weight: 600;
       line-height: 1.25;
       letter-spacing: -0.84px;
     }
-
     .item-link {
-      font-family: "IBM Plex Sans", serif;
+      font-family: "IBM Plex Sans", sans-serif;
       font-size: 1.57rem;
       font-weight: 400;
       line-height: 1.25;
@@ -194,38 +111,31 @@
       color: #0062F3;
       text-align: center;
     }
-
     .item-frame {
       max-width: 465px;
       margin: 0 auto;
       position: relative;
     }
-
     .item-frame > img {
       width: 100%;
     }
-
     .item-frame.-approved {
       outline: 2px solid #1A9951;
     }
-
     .item-frame.-revision {
       outline: 2px solid #CE2D27;
     }
-
     .buttons {
       display: flex;
       gap: 43px;
       justify-content: center;
       align-items: center;
     }
-
     .buttons.-hidden {
       display: none;
     }
-
     .btn {
-      font-family: "IBM Plex Sans", serif;
+      font-family: "IBM Plex Sans", sans-serif;
       font-size: 1.14rem;
       font-weight: 500;
       line-height: 1.25;
@@ -236,20 +146,16 @@
       padding: 12px 16px 14px;
       text-align: center;
     }
-
     .btn.approve,
     .btn.revise {
       text-transform: uppercase;
     }
-
     .btn.approve {
       background-color: #1A9951;
     }
-
     .btn.revise {
       background-color: #CE2D27;
     }
-
     .btn.submit {
       font-size: 0.78rem;
       font-weight: 500;
@@ -262,7 +168,6 @@
       text-transform: none;
       border-radius: 21px;
     }
-
     .feedback-container {
       padding: 20px 16px 16px;
       background-color: #F1F3F8;
@@ -272,11 +177,9 @@
       border-radius: 8px;
       display: block;
     }
-
     .feedback-container.-hidden {
       display: none;
     }
-    
     .feedback-container > .input {
       border: 0px transparent;
       outline: none;
@@ -287,14 +190,12 @@
       box-sizing: border-box;
       overflow: hidden;
     }
-  
     .feedback-container > .input::placeholder {
-      font-family: "IBM Plex Sans", serif;
+      font-family: "IBM Plex Sans", sans-serif;
       font-size: 0.86rem;
       letter-spacing: -0.36px;
       color: rgba(142, 153, 170, 0.6);
     }
-
     .feedback-container > .btn.submit {
       margin-top: 20px;
       margin-left: auto;
@@ -325,26 +226,18 @@
     <div class="swiper-button-prev"></div>
   </div>
 
-  <!-- <div class="buttons">
-    <button class="approve" onclick="handleApprove()">Approve</button>
-    <button class="revise" onclick="showRevisionInput()">Revise</button>
-    <div class="revision-input">
-      <textarea id="revisionText" placeholder="Enter revisions..."></textarea>
-      <button onclick="handleRevise()">Submit Revision</button>
-    </div>
-  </div> -->
-
   <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
   <script>
     const FIGMA_TOKEN = 'figd_DAYYuZvZtH4N22jZoD3jyNdnpOqPk-jfy09qwiLp';
     const FILE_KEY = 'UiwgqmTixQa5iG4lwq15uu';
+    // CSV feed
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrXwX_TLeItz7QDQkszQF-KwXauLN9Mf4eS2K5sbC7Y1lYEaNCC6-r8bwDuf-qM2Ad1plBDyoFOo7K/pub?output=csv";
-    const SCRIPT_URL = "https://snowman.miro-gonda.workers.dev/";
 
     let currentRow = 1; 
     let rows = [];
     let swiper;
 
+    // 1) Load the CSV data
     fetch(SHEET_URL)
       .then(response => response.text())
       .then(csvData => {
@@ -360,7 +253,7 @@
         swiper = new Swiper(".swiper-container", {
           pagination: { el: ".swiper-pagination", clickable: true },
           navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
-          slidesPerView: 1, 
+          slidesPerView: 1,
           loop: false,
           keyboard: true,
           on: {
@@ -383,13 +276,11 @@
                 if (approveButton) {
                   approveButton.onclick = onApproveClick;
                 }
-
                 if (reviseButton) {
                   reviseButton.onclick = onReviseClick;
                 }
-
-                if(submitButton) {
-                  submitButton.onclick = handleApprove;
+                if (submitButton) {
+                  submitButton.onclick = handleSubmitFeedback;
                 }
 
                 if(itemImg) {        
@@ -416,6 +307,7 @@
       });
 
     function processRow(line, index) {
+      // For demonstration, we assume the CSV has 3 columns: [Name, link, nodeId]
       let parts = line.split(",");
       parts = parts.map(part => part.trim().replace(/^"|"$/g, ""));
       const [name, link, nodeId] = parts;
@@ -434,12 +326,7 @@
       const safeName = name || "No Name";
       const hasLink = link && link.startsWith("http");
       const linkSection = hasLink
-        ? 
-        `
-          <div class="link-container">
-            🔗  <a href="${link}" target="_blank" class="item-link">${link}</a>    
-          </div>
-        `
+        ? `<div class="link-container">🔗 <a href="${link}" target="_blank" class="item-link">${link}</a></div>`
         : `<p>No Link</p>`;
       let imageSection = "";
       if (imageUrl) {
@@ -456,28 +343,15 @@
             <h3 class="item-name">${safeName}</h3>
             ${linkSection}
             ${imageSection}
-            
             <div class="buttons">
-              <button class="btn approve" >Approve</button>
-              <button class="btn revise" >Revise</button>
+              <button class="btn approve">Approve</button>
+              <button class="btn revise">Revise</button>
             </div>
-
-             <div class="feedback-container -hidden">
-                <textarea 
-                  id="feedbackText" 
-                  class="input" 
-                  placeholder="Any additional comments, feedback on the approved item?"
-                  oninput="autoResize(this)"
-                ></textarea>
-                <div class="btn submit">Submit</div>
+            <div class="feedback-container -hidden">
+              <textarea class="input" placeholder="Any additional comments?"></textarea>
+              <div class="btn submit">Submit</div>
             </div>
           </div>
-
-          <!-- <div class="buttons">
-            <button class="btn approve" onclick="handleApprove()">Approve</button>
-            <button class="btn revise" onclick="showRevisionInput()">Revise</button>
-          </div> -->
-         
         </div>
       `;
     }
@@ -503,96 +377,14 @@
     }
 
     function onApproveClick(event) {
-   
       const buttonsContainer = event.target.parentElement;
       const itemFrame = buttonsContainer.previousElementSibling;
       const inputField = buttonsContainer.nextElementSibling;
-
       itemFrame.classList.add('-approved');
       buttonsContainer.classList.add('-hidden');
-
-      if(itemFrame.classList.contains('-revision')) {
+      if (itemFrame.classList.contains('-revision')) {
         itemFrame.classList.remove('-revision');
       }
-
-      showInputField(inputField, true);
-    }
-
-    function handleApprove() {
-      console.log('submitted!: ');
-      const line = rows[currentRow - 1];
-      if (!line) {
-        alert("No row data found. Possibly an empty carousel?");
-        return;
-      }
-      const parts = line.split(",");
-      const parsed = parts.map(p => p.trim().replace(/^"|"$/g, ""));
-      const nodeId = parsed[2] || "";
-      updateStatus("Approved", nodeId, currentRow + 1);
-    }
-
-    function showRevisionInput() {
-      document.querySelector(".revision-input").style.display = "block";
-    }
-
-    function handleRevise() {
-      const revisionText = document.getElementById("revisionText").value;
-      if (revisionText) {
-        updateStatus(`Revise: ${revisionText}`, "", currentRow + 1);
-        document.querySelector(".revision-input").style.display = "none";
-        document.getElementById("revisionText").value = "";
-      } else {
-        alert("Please enter revision notes!");
-      }
-    }
-
-    function updateStatus(status, nodeId = "", rowOverride) {
-      if (!rows[currentRow - 1]) {
-        alert("No row data found. Possibly an empty carousel?");
-        return;
-      }
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ 
-          row: rowOverride, 
-          status: status, 
-          nodeId: nodeId 
-        }),
-        headers: { "Content-Type": "application/json" }
-      })
-      .then(response => response.text())
-      .then(msg => {
-        console.log("Response from server:", msg);
-        alert("Status updated successfully!");
-      })
-      .catch(err => {
-        console.error("Failed to update status:", err);
-        alert("Failed to update status.");
-      });
-    }
-  
-    function showInputField(element, approved = false) {
-      element.classList.remove('-hidden');
-
-      if(approved) {
-        element.querySelector('.btn.submit').classList.add('approve');
-      } else {
-        element.querySelector('.btn.submit').classList.add('revise');
-      }
-    }
-
-    function onApproveClick(event) {
-      const buttonsContainer = event.target.parentElement;
-      const itemFrame = buttonsContainer.previousElementSibling;
-      const inputField = buttonsContainer.nextElementSibling;
-
-      itemFrame.classList.add('-approved');
-      buttonsContainer.classList.add('-hidden');
-
-      if(itemFrame.classList.contains('-revision')) {
-        itemFrame.classList.remove('-revision');
-      }
-
       showInputField(inputField, true);
     }
 
@@ -600,17 +392,46 @@
       const buttonsContainer = event.target.parentElement;
       const itemFrame = buttonsContainer.previousElementSibling;
       const inputField = buttonsContainer.nextElementSibling;
-
       itemFrame.classList.add('-revision');
       buttonsContainer.classList.add('-hidden');
-
-      if(itemFrame.classList.contains('-approved')) {
+      if (itemFrame.classList.contains('-approved')) {
         itemFrame.classList.remove('-approved');
       }
-
       showInputField(inputField, false);
     }
-    
+
+    function showInputField(element, approved) {
+      element.classList.remove('-hidden');
+      const submitBtn = element.querySelector('.btn.submit');
+      if (approved) {
+        submitBtn.classList.add('approve');
+        submitBtn.classList.remove('revise');
+      } else {
+        submitBtn.classList.add('revise');
+        submitBtn.classList.remove('approve');
+      }
+    }
+
+    function handleSubmitFeedback(event) {
+      const feedbackContainer = event.target.parentElement;
+      const feedbackText = feedbackContainer.querySelector('.input').value;
+      const reviewItem = feedbackContainer.parentElement;
+      const itemFrame = reviewItem.querySelector('.item-frame');
+
+      let finalStatus = "";
+      if (itemFrame.classList.contains('-approved')) {
+        finalStatus = `Approved: ${feedbackText}`;
+      } else if (itemFrame.classList.contains('-revision')) {
+        finalStatus = `Revise: ${feedbackText}`;
+      } else {
+        finalStatus = feedbackText;
+      }
+      // -------------- NO SHEET UPDATE --------------
+      // We no longer call updateStatus or any fetch to SCRIPT_URL
+      // Just show user a success message
+      alert(`Feedback submitted!\n${finalStatus}`);
+    }
+
     function moveLens(zoomWindow, img, ratio = 3){ 
       let pos = getCursor(img)
 
@@ -658,33 +479,6 @@
       
       return {'x':x, 'y':y}
     }
-
-
-
-    //   function moveLens(zoomWindow, img, ratio=3){
-    //   let cursorPos = getCursor(img);
-    //   let x = cursorPos.x - zoomWindow.offsetWidth;
-    //   let y = cursorPos.y;
-
-    //   if (x < 0) x = 0;
-    //   if (y < 0) y = 0;
-    //   if (x > img.width) x = img.width - zoomWindow.offsetWidth
-    //   if (y > img.height) y = img.height - zoomWindow.offsetHeight
-    
-
-    //   zoomWindow.style.left = `${x}px`;
-    //   zoomWindow.style.top = `${y}px`;
-     
-    //   zoomWindow.style.backgroundSize = `${img.width * ratio}px ${img.height * ratio}px`;
-    //   zoomWindow.style.backgroundPosition = `-${x * ratio}px -${y * ratio}px`;
-    // }
-
-    
-  </script>
-  <script>
-
-    
-    
 
   </script>
 </body>
