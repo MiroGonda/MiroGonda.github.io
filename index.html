@@ -198,6 +198,7 @@
     .item-frame {
       max-width: 465px;
       margin: 0 auto;
+      position: relative;
     }
 
     .item-frame > img {
@@ -299,6 +300,20 @@
       margin-left: auto;
       width: 68px;
     }
+
+    .zoom-window {
+      width: 200px;
+      height: 100px;
+      /* background: gray; */
+      border: 1px solid black;
+      position: absolute;
+      top: 0;
+      opacity: 0;
+    }
+
+    .zoom-window.-active {
+      opacity: 1;
+    }
         
   </style>
 </head>
@@ -355,6 +370,7 @@
             },
             init: () => {
               const reviewItems = document.querySelectorAll('.review-item');
+              const zoomRation = 3;
              
               // Iterate over each review item
               reviewItems.forEach((reviewItem) => {
@@ -362,8 +378,7 @@
                 const reviseButton = reviewItem.querySelector('.buttons .btn.revise');
                 const submitButton = reviewItem.querySelector('.feedback-container .btn.submit');
                 const itemImg = reviewItem.querySelector('.item-frame .item-frame-img');
-                
-                console.log('Submit: ',submitButton)
+                const zoomWindow = reviewItem.querySelector('.zoom-window');
 
                 if (approveButton) {
                   approveButton.onclick = onApproveClick;
@@ -377,15 +392,16 @@
                   submitButton.onclick = handleApprove;
                 }
 
-                if(itemImg) {
-                  itemImg.addEventListener('mousemove', (event) => {
-                    const rect = itemImg.getBoundingClientRect();
-                    const x = event.clientX - rect.left;
-                    const y = event.clientY - rect.top;
-                    const coordinates = { x: Math.round(x), y: Math.round(y) };
+                if(itemImg) {        
+                  itemImg.addEventListener('mousemove', (event) => moveLens(zoomWindow, itemImg))
+                  zoomWindow.addEventListener('mousemove', (event) => moveLens(zoomWindow, itemImg))
+                  zoomWindow.addEventListener('mouseenter', (event) => {
+                    zoomWindow.classList.add('-active');
+                  })   
 
-                    console.log(coordinates);
-                  })
+                  zoomWindow.addEventListener('mouseleave', (event) => {
+                    zoomWindow.classList.remove('-active');
+                  }) 
                 }
               });
             }
@@ -430,6 +446,7 @@
         imageSection = `
           <div class="item-frame">
             <img class="item-frame-img" src="${imageUrl}" alt="Figma Node" ></img>
+            <div class="zoom-window"> </div>
           </div>
         `;
       }
@@ -593,7 +610,76 @@
 
       showInputField(inputField, false);
     }
-  
+    
+    function moveLens(zoomWindow, img, ratio = 3){ 
+      let pos = getCursor(img)
+
+      let positionLeft = pos.x - (zoomWindow.offsetWidth / 2)
+      let positionTop = pos.y - (zoomWindow.offsetHeight / 2)
+
+
+      if(positionLeft < 0 ){
+        positionLeft = 0
+      }
+
+      if(positionTop < 0 ){
+        positionTop = 0
+      }
+
+      if(positionLeft > img.width - zoomWindow.offsetWidth /3 ){
+        positionLeft = img.width - zoomWindow.offsetWidth /3
+      }
+
+      if(positionTop > img.height - zoomWindow.offsetHeight /3 ){
+        positionTop = img.height - zoomWindow.offsetHeight /3
+      }
+
+      //3
+      zoomWindow.style.left = positionLeft + 'px';
+      zoomWindow.style.top = positionTop + 'px';
+
+      //4
+      zoomWindow.style.backgroundImage = `url(${img.src})`;
+      zoomWindow.style.backgroundSize = (img.width * ratio) + 'px ' + (img.height * ratio) + 'px';  
+      zoomWindow.style.backgroundPosition = "-" + ((pos.x * ratio) - 90) + 'px -' +  (pos.y * ratio) + 'px'
+      zoomWindow.style.backgroundRepeat = 'no-repeat';
+    }
+
+    function getCursor(img){
+      let e = window.event
+      let bounds = img.getBoundingClientRect()
+
+      //console.log('e:', e)
+      //console.log('bounds:', bounds)
+      let x = e.pageX - bounds.left
+      let y = e.pageY - bounds.top
+      x = x - window.pageXOffset;
+      y = y - window.pageYOffset;
+      
+      return {'x':x, 'y':y}
+    }
+
+
+
+    //   function moveLens(zoomWindow, img, ratio=3){
+    //   let cursorPos = getCursor(img);
+    //   let x = cursorPos.x - zoomWindow.offsetWidth;
+    //   let y = cursorPos.y;
+
+    //   if (x < 0) x = 0;
+    //   if (y < 0) y = 0;
+    //   if (x > img.width) x = img.width - zoomWindow.offsetWidth
+    //   if (y > img.height) y = img.height - zoomWindow.offsetHeight
+    
+
+    //   zoomWindow.style.left = `${x}px`;
+    //   zoomWindow.style.top = `${y}px`;
+     
+    //   zoomWindow.style.backgroundSize = `${img.width * ratio}px ${img.height * ratio}px`;
+    //   zoomWindow.style.backgroundPosition = `-${x * ratio}px -${y * ratio}px`;
+    // }
+
+    
   </script>
   <script>
 
