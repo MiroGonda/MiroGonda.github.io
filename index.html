@@ -237,6 +237,8 @@
     let rows = [];
     let swiper;
 
+    console.log('rows: ', rows);
+
     // 1) Load the CSV data
     fetch(SHEET_URL)
       .then(response => response.text())
@@ -386,6 +388,8 @@
         itemFrame.classList.remove('-revision');
       }
       showInputField(inputField, true);
+
+
     }
 
     function onReviseClick(event) {
@@ -418,7 +422,9 @@
       const reviewItem = feedbackContainer.parentElement;
       const itemFrame = reviewItem.querySelector('.item-frame');
 
+      let submitBtn = event.target.closest('.swiper-slide.swiper-slide-active');
       let finalStatus = "";
+
       if (itemFrame.classList.contains('-approved')) {
         finalStatus = `Approved: ${feedbackText}`;
       } else if (itemFrame.classList.contains('-revision')) {
@@ -430,6 +436,20 @@
       // We no longer call updateStatus or any fetch to SCRIPT_URL
       // Just show user a success message
       alert(`Feedback submitted!\n${finalStatus}`);
+
+      
+      let firstNumber;
+
+      if (submitBtn) {
+          // Get the aria-label value
+          let ariaLabelValue = submitBtn.getAttribute('aria-label');
+
+          // Extract the first number using regex
+          firstNumber = parseInt(ariaLabelValue.match(/\d+/)[0], 10);
+      }
+
+      swiper.removeSlide(firstNumber - 1);
+      swiper.update()
     }
 
     function moveLens(zoomWindow, img, ratio = 3){ 
@@ -480,6 +500,25 @@
       return {'x':x, 'y':y}
     }
 
+
+
+    /*
+      1. Clicking Approved/Revised: (1) Comment on Asset in Figma (2) Comment on Main Card based on status
+      1.2 REMOVE item from website
+
+      IF EXISTS
+        - Store items in local storage 
+        - Compare local storage with recently pulled list 
+        - If exists do not add to swiper
+        - 
+
+      IF APPROVE/REVISED
+        - Update swiper
+
+      2. Subdomain Reports
+      3. Password
+      4. UI ni Don
+    */
   </script>
 </body>
 </html>
