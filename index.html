@@ -481,22 +481,33 @@ async function replyToFigmaComment(commentLink, replyMessage) {
 // Function to reply to an existing Figma comment
 async function replyToFigmaComment(commentLink, replyMessage) {
   try {
-    // Extract the file key and comment ID from the comment link
-    // Figma comment links look like: https://www.figma.com/file/FILE_KEY/FileName?node-id=X%3AY&t=abc123&comment=COMMENT_ID
-    const fileKeyMatch = commentLink.match(/\/file\/([A-Za-z0-9]+)\//);
-    const commentIdMatch = commentLink.match(/comment=([A-Za-z0-9-]+)/);
+    console.log("Trying to reply to comment at link:", commentLink);
     
-    if (!fileKeyMatch || !commentIdMatch) {
-      console.error("Could not parse file key or comment ID from", commentLink);
+    // Extract the file key from the Figma URL
+    const fileKeyMatch = commentLink.match(/\/file\/([A-Za-z0-9]+)/);
+    if (!fileKeyMatch) {
+      console.error("Could not parse file key from", commentLink);
       return;
     }
     
     const fileKey = fileKeyMatch[1];
-    const commentId = commentIdMatch[1];
     
-    // POST /v1/files/{file_key}/comments/{comment_id}/replies
+    // Extract the comment ID from the URL (appears after the # symbol)
+    const commentIdMatch = commentLink.match(/#(\d+)/);
+    if (!commentIdMatch) {
+      console.error("Could not parse comment ID from", commentLink);
+      return;
+    }
+    
+    const commentId = commentIdMatch[1];
+
+    console.log("Extracted file key:", fileKey, "and comment ID:", commentId);
+    
+    // POST reply to the comment thread in Figma
     const url = `https://api.figma.com/v1/files/${fileKey}/comments/${commentId}/replies`;
     const body = { message: replyMessage };
+    
+    console.log("Posting reply to URL:", url);
     
     const resp = await fetch(url, {
       method: "POST",
@@ -506,11 +517,13 @@ async function replyToFigmaComment(commentLink, replyMessage) {
       },
       body: JSON.stringify(body)
     });
-    
+
     if (!resp.ok) {
-      console.error("Figma comment reply error:", await resp.text());
+      const errorText = await resp.text();
+      console.error("Figma comment reply error:", errorText);
     } else {
-      console.log("Posted reply to Figma comment:", replyMessage, "to comment ID:", commentId);
+      const responseData = await resp.json();
+      console.log("✅ Successfully posted reply. Response:", responseData);
     }
   } catch (err) {
     console.error("Error in replyToFigmaComment:", err);
